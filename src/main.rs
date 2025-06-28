@@ -19,6 +19,7 @@ use tower::ServiceBuilder;
 use tower_http::{
     cors::CorsLayer,
     trace::TraceLayer,
+    services::ServeDir,
 };
 use tracing::info;
 
@@ -58,27 +59,40 @@ async fn main() -> anyhow::Result<()> {
 
     let (_watcher, _config_tx) = ConfigWatcher::new(&args.config)?;
     
-    let app = Router::new()
+    // API and Proxy Server
+    let api_app = Router::new()
         .route("/health", get(health_check))
         .merge(api::create_api_router())
         .fallback(any(proxy_handler))
         .layer(
             ServiceBuilder::new()
                 .layer(TraceLayer::new_for_http())
-                .layer(CorsLayer::permissive())
+                .layer(CorsLayer::permissive()),
         )
         .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind(format!("{}:{}",
-        config.server.host,
-        config.server.port
-    )).await?;
+    let api_listener = tokio::net::TcpListener::bind(format!(
+        "{}:{}",
+        config.server.host, config.server.port
+    ))
+    .await?;
+    info!("API and Proxy server listening on {}:{}", config.server.host, config.server.port);
+    let api_server = axum::serve(api_listener, api_app).with_graceful_shutdown(shutdown_signal());
 
-    info!("Server listening on {}:{}", config.server.host, config.server.port);
+    // WebUI Server
+    let web_ui_app = Router::new().nest_service("/", ServeDir::new("web-ui/dist"));
+    let web_ui_listener = tokio::net::TcpListener::bind(format!(
+        "{}:{}",
+        config.server.host, config.server.web_ui_port
+    ))
+    .await?;
+    info!("WebUI server listening on {}:{}", config.server.host, config.server.web_ui_port);
+    let web_ui_server = axum::serve(web_ui_listener, web_ui_app);
 
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
+    tokio::try_join!(
+        api_server,
+        web_ui_server,
+    )?;
 
     Ok(())
 }
