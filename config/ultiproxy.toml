@@ -1,0 +1,32 @@
+[server]
+host = "0.0.0.0"
+port = 8080
+web_ui_port = 3000
+
+[logging]
+level = "info"
+file = "ultiproxy.log"
+
+[[forwarding_rules]]
+name = "api_proxy"
+path = "/api/*"
+target_urls = ["http://httpbin.org", "http://jsonplaceholder.typicode.com"]
+load_balancing = "round_robin"
+
+[forwarding_rules.header_replacements]
+"X-Custom-Header" = { source = "file", path = "./examples/headers.txt", split_by = "line", cache_ttl = 300 }
+
+[forwarding_rules.body_replacements]
+"{{API_KEY}}" = { source = "file", path = "./examples/api_keys.txt", split_by = "line", cache_ttl = 600 }
+
+[[forwarding_rules]]
+name = "static_proxy"
+path = "/static/**"
+target_urls = ["http://httpbin.org"]
+load_balancing = "round_robin"
+
+[[forwarding_rules]]
+name = "test_proxy"
+path = "/test"
+target_urls = ["http://httpbin.org/get"]
+load_balancing = "round_robin"
