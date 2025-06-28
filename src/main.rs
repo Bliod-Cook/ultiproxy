@@ -1,3 +1,4 @@
+mod api;
 mod config;
 mod content;
 mod proxy;
@@ -59,6 +60,7 @@ async fn main() -> anyhow::Result<()> {
     
     let app = Router::new()
         .route("/health", get(health_check))
+        .merge(api::create_api_router())
         .fallback(any(proxy_handler))
         .layer(
             ServiceBuilder::new()

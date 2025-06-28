@@ -14,10 +14,17 @@ A sophisticated HTTP proxy service built in Rust that supports configurable forw
 - ✅ Structured logging with tracing
 - ✅ Graceful shutdown handling
 
+✅ **Phase 2 Completed**
+- ✅ REST API endpoints for configuration management
+- ✅ Real-time WebSocket support for events
+- ✅ Enhanced health check and metrics endpoints
+- ✅ Rules management API (CRUD operations)
+- ✅ Content source management API
+
 🚧 **In Progress**
-- Remote URL content sources (basic implementation done)
-- Configuration hot-reload (file watcher implemented)
-- WebUI development
+- Configuration hot-reload integration (file watcher ready)
+- Metrics collection system (basic structure implemented)
+- WebUI development (next phase)
 
 📋 **Planned (Future Phases)**
 - React-based WebUI for management
@@ -84,6 +91,85 @@ curl http://localhost:8080/api/anything  # Will go to different backend
 # Test with custom headers
 curl -H "X-Custom-Header: test" http://localhost:8080/api/anything
 ```
+
+## API Endpoints
+
+UltiProxy now includes a comprehensive REST API for runtime management:
+
+### Configuration Management
+```bash
+# Get current configuration
+curl http://localhost:8080/api/config
+
+# Update configuration (requires JSON body)
+curl -X PUT http://localhost:8080/api/config \
+  -H "Content-Type: application/json" \
+  -d @new-config.json
+
+# Reload configuration from file
+curl -X POST http://localhost:8080/api/config/reload
+
+# Validate configuration without applying
+curl -X POST http://localhost:8080/api/config/validate \
+  -H "Content-Type: application/json" \
+  -d @config-to-validate.json
+```
+
+### Rules Management
+```bash
+# List all forwarding rules
+curl http://localhost:8080/api/rules
+
+# Create new rule
+curl -X POST http://localhost:8080/api/rules \
+  -H "Content-Type: application/json" \
+  -d '{"name":"new_rule","path":"/new/*","target_urls":["http://example.com"],"load_balancing":"round_robin"}'
+
+# Update existing rule
+curl -X PUT http://localhost:8080/api/rules/rule_name \
+  -H "Content-Type: application/json" \
+  -d @updated-rule.json
+
+# Delete rule
+curl -X DELETE http://localhost:8080/api/rules/rule_name
+
+# Test rule against sample request
+curl -X POST http://localhost:8080/api/rules/api_proxy/test \
+  -H "Content-Type: application/json" \
+  -d '{"method":"GET","path":"/api/users","headers":{}}'
+```
+
+### Monitoring & Metrics
+```bash
+# Get system metrics
+curl http://localhost:8080/api/metrics
+
+# Enhanced health check
+curl http://localhost:8080/api/health
+
+# Get proxy status
+curl http://localhost:8080/api/status
+```
+
+### Content Management
+```bash
+# List content sources
+curl http://localhost:8080/api/content/sources
+
+# Clear all cache
+curl -X POST http://localhost:8080/api/content/cache/clear
+
+# Get cache statistics
+curl http://localhost:8080/api/content/cache/stats
+```
+
+### WebSocket Events
+Connect to `ws://localhost:8080/ws/events` for real-time updates including:
+- Metrics updates (every 5 seconds)
+- Configuration changes
+- Rule updates
+- Error events
+- Cache operations
 
 ## Configuration
 
