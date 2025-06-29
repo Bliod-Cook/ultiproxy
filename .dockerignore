@@ -1,0 +1,41 @@
+# Rust build artifacts
+target/
+Cargo.lock
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Web UI (built separately)
+web-ui/node_modules/
+web-ui/dist/
+web-ui/.vite/
+
+# Logs
+*.log
+
+# Environment files
+.env*
+
+# Temporary files
+tmp/
+temp/

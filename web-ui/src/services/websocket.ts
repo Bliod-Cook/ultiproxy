@@ -1,51 +1,92 @@
-import { io, Socket } from 'socket.io-client';
 import type { SystemMetrics } from './types';
 
 const WS_URL = 'ws://localhost:8080/ws/events';
 
-interface ServerToClientEvents {
-  metrics_update: (data: SystemMetrics) => void;
-  config_changed: () => void;
-  rule_updated: () => void;
+interface WebSocketEvent {
+  type: 'metrics_update' | 'config_changed' | 'rule_updated';
+  data?: SystemMetrics;
 }
 
-type ClientToServerEvents = Record<string, never>;
-
 class WebSocketService {
-  private socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
+  private socket: WebSocket | null = null;
+  private eventHandlers: Map<string, ((data: unknown) => void)[]> = new Map();
+  private reconnectInterval: number | null = null;
 
   connect() {
-    if (!this.socket) {
-      this.socket = io(WS_URL);
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      return;
+    }
 
-      this.socket.on('connect', () => {
+    try {
+      this.socket = new WebSocket(WS_URL);
+
+      this.socket.onopen = () => {
         console.log('WebSocket connected');
-      });
+        if (this.reconnectInterval) {
+          clearInterval(this.reconnectInterval);
+          this.reconnectInterval = null;
+        }
+      };
 
-      this.socket.on('disconnect', () => {
+      this.socket.onmessage = (event) => {
+        try {
+          const message: WebSocketEvent = JSON.parse(event.data);
+          this.handleMessage(message);
+        } catch (error) {
+          console.error('Failed to parse WebSocket message:', error);
+        }
+      };
+
+      this.socket.onclose = () => {
         console.log('WebSocket disconnected');
-      });
+        this.scheduleReconnect();
+      };
+
+      this.socket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+    } catch (error) {
+      console.error('Failed to create WebSocket connection:', error);
+      this.scheduleReconnect();
     }
   }
 
   disconnect() {
+    if (this.reconnectInterval) {
+      clearInterval(this.reconnectInterval);
+      this.reconnectInterval = null;
+    }
+    
     if (this.socket) {
-      this.socket.disconnect();
+      this.socket.close();
       this.socket = null;
     }
   }
 
-  subscribe<T extends keyof ServerToClientEvents>(event: T, handler: ServerToClientEvents[T]) {
-    if (this.socket) {
-      // Using 'any' as a workaround for complex socket.io-client types
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.socket.on(event, handler as any);
+  subscribe(event: string, handler: (data: unknown) => void) {
+    if (!this.eventHandlers.has(event)) {
+      this.eventHandlers.set(event, []);
+    }
+    this.eventHandlers.get(event)!.push(handler);
+  }
+
+  unsubscribe(event: string) {
+    this.eventHandlers.delete(event);
+  }
+
+  private handleMessage(message: WebSocketEvent) {
+    const handlers = this.eventHandlers.get(message.type);
+    if (handlers) {
+      handlers.forEach(handler => handler(message.data));
     }
   }
 
-  unsubscribe<T extends keyof ServerToClientEvents>(event: T) {
-    if (this.socket) {
-      this.socket.off(event);
+  private scheduleReconnect() {
+    if (!this.reconnectInterval) {
+      this.reconnectInterval = window.setInterval(() => {
+        console.log('Attempting to reconnect WebSocket...');
+        this.connect();
+      }, 5000);
     }
   }
 }

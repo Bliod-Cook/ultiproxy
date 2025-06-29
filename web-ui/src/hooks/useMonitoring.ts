@@ -20,8 +20,10 @@ export function useMonitoring() {
   });
 
   useEffect(() => {
-    const handleMetricsUpdate = (data: SystemMetrics) => {
-      setLiveMetrics(data);
+    const handleMetricsUpdate = (data: unknown) => {
+      if (data && typeof data === 'object') {
+        setLiveMetrics(data as SystemMetrics);
+      }
     };
 
     webSocketService.subscribe('metrics_update', handleMetricsUpdate);

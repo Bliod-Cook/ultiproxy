@@ -9,6 +9,12 @@ import type {
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error: string | null;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
@@ -18,11 +24,16 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'API request failed');
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
   }
 
-  return response.json();
+  const result: ApiResponse<T> = await response.json();
+  
+  if (!result.success) {
+    throw new Error(result.error || 'API request failed');
+  }
+
+  return result.data;
 }
 
 export const api = {
