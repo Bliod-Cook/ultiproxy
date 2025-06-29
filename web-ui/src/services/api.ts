@@ -6,8 +6,9 @@ import type {
   HealthStatus,
   CacheStats,
 } from './types';
+import { config } from '../config/env';
 
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = config.apiBaseUrl;
 
 interface ApiResponse<T> {
   success: boolean;

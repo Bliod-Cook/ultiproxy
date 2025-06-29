@@ -1,6 +1,7 @@
 import type { SystemMetrics } from './types';
+import { config } from '../config/env';
 
-const WS_URL = 'ws://localhost:8080/ws/events';
+const WS_URL = config.wsBaseUrl;
 
 interface WebSocketEvent {
   type: 'metrics_update' | 'config_changed' | 'rule_updated';

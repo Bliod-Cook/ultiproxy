@@ -165,12 +165,19 @@ npm run type-check
 
 ### Environment Variables
 
-Create a `.env` file for environment-specific configuration:
+The WebUI automatically detects the backend URL based on the environment:
+
+- **Development**: Uses Vite proxy to forward requests to `localhost:8080`
+- **Production**: Uses the same origin as the frontend by default
+
+For custom backend URLs, create a `.env` file:
 
 ```env
-VITE_API_BASE_URL=http://localhost:8080
-VITE_WS_URL=ws://localhost:8080/ws
+# Custom backend URL (optional)
+VITE_API_BASE_URL=https://your-backend-domain.com
 ```
+
+See `.env.example` for more configuration options.
 
 ## 🐳 Docker Support
 
