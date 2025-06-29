@@ -51,3 +51,9 @@ docker-compose up --build
 ### 权限设置
 
 GitHub Actions使用 `GITHUB_TOKEN` 自动推送镜像，无需额外配置。镜像默认为私有，可在仓库设置中修改为公开。
+
+### 修复的问题
+
+- 修复了 `.dockerignore` 中错误忽略 `Cargo.lock` 文件的问题
+- 修复了前端 Dockerfile 中 `npm ci --only=production` 导致构建失败的问题
+- 更新了 Dockerfile 中的 Rust 版本从 1.75 到 1.83，以支持新版本的 Cargo.lock 文件格式
