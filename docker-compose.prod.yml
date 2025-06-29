@@ -37,6 +37,8 @@ services:
       context: ./web-ui
       dockerfile: Dockerfile
       target: runtime
+      args:
+        - VITE_API_BASE_URL=http://backend:8080
     container_name: ultiproxy-frontend-prod
     ports:
       - "80:80"

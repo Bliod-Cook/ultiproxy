@@ -223,10 +223,29 @@ npm run build
 ```
 
 ### Docker Deployment
+
+#### Standalone Docker
 ```bash
+# Build with default configuration
 docker build -t ultiproxy-webui .
+
+# Build with custom backend URL
+docker build --build-arg VITE_API_BASE_URL=https://your-backend.com -t ultiproxy-webui .
+
+# Run the container
 docker run -p 80:80 ultiproxy-webui
 ```
+
+#### Docker Compose
+```bash
+# Development environment
+docker-compose up
+
+# Production environment
+docker-compose -f docker-compose.prod.yml up
+```
+
+The Docker Compose files automatically configure the frontend to connect to the backend service within the Docker network.
 
 ## 📈 Current Status
 
